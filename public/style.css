@@ -1,0 +1,363 @@
+:root {
+    /* --- 全域背景與文字 --- */
+    --bg-color: #f8f9fa; /* 稍微帶灰的白 */
+    --text-main: #24292f;
+    --text-sub: #57606a;
+    --accent: #0969da;
+    
+    /* --- Code Window (Light Mode) --- */
+    --window-bg: rgba(255, 255, 255, 0.65); /* 白色的玻璃 */
+    --window-border: rgba(31, 35, 40, 0.15);
+    --window-header: rgba(230, 230, 230, 0.7);
+    --window-title: #57606a;
+    --window-text: #24292f;
+    
+    /* JSON 語法高亮 (Light Mode) */
+    --json-key: #b35900;
+    --json-string: #116329;
+    --json-comment: #6e7781;
+    
+    --transition: 0.3s ease;
+}
+
+[data-theme="dark"] {
+    /* --- 全域背景與文字 --- */
+    --bg-color: #0d1117;
+    --text-main: #e6edf3;
+    --text-sub: #8b949e;
+    --accent: #3fb950;
+    
+    /* --- Code Window (Dark Mode) --- */
+    --window-bg: rgba(22, 27, 34, 0.7); /* 深色的玻璃 */
+    --window-border: rgba(240, 246, 252, 0.1);
+    --window-header: rgba(30, 35, 40, 0.6);
+    --window-title: #8b949e;
+    --window-text: #e6edf3;
+    
+    /* JSON 語法高亮 (Dark Mode) */
+    --json-key: #ff9f43;
+    --json-string: #3fb950;
+    --json-comment: #8b949e;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    margin: 0;
+    padding: 0;
+    line-height: 1.8;
+    color: var(--text-main);
+    
+    /* --- 背景設定與流動動畫 (主要修改處) --- */
+    background-color: var(--bg-color);
+    
+    /* 定義兩個顏色的光暈：左上藍色、右下綠色 */
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(9, 105, 218, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(39, 201, 63, 0.15) 0px, transparent 50%);
+        
+    /* 放大背景尺寸以允許移動 */
+    background-size: 140% 140%;
+    
+    /* 啟動呼吸動畫 */
+    animation: bg-flow 15s ease-in-out infinite alternate;
+    
+    transition: background-color var(--transition), color var(--transition);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+/* Dark Mode 的背景光暈調整 (更適合暗黑環境) */
+[data-theme="dark"] body {
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(56, 139, 253, 0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(46, 160, 67, 0.1) 0px, transparent 50%);
+}
+
+/* 背景動畫關鍵影格 */
+@keyframes bg-flow {
+    0% {
+        background-position: 0% 0%;
+        background-size: 120% 120%;
+    }
+    100% {
+        background-position: 100% 100%;
+        background-size: 140% 140%;
+    }
+}
+
+.container {
+    width: 100%;
+    max-width: 800px;
+    padding: 4rem 2rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.theme-toggle {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-main);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.theme-toggle:hover { opacity: 1; }
+
+header {
+    margin-bottom: 3rem;
+    text-align: center;
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    header { margin-top: 2rem; }
+}
+
+h1 {
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.subtitle {
+    color: var(--text-sub);
+    font-size: 0.9rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+footer {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    opacity: 0.7;
+    width: 100%;
+}
+
+/* --- Typing Animation --- */
+.typing-text {
+    display: inline-block;
+    border-right: 5px solid var(--accent);
+    white-space: nowrap;
+    margin: 0 auto;
+    letter-spacing: 0.05em;
+    font-family: 'JetBrains Mono', monospace; 
+    clip-path: inset(0 100% 0 0); 
+    animation: typing 3.5s steps(36, end) forwards, blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+    from { clip-path: inset(0 100% 0 0); }
+    to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: var(--accent); }
+}
+
+/* --- JSON Window --- */
+.code-window {
+    /* 使用變數 */
+    background-color: var(--window-bg) !important;
+    border: 1px solid var(--window-border);
+    
+    /* 這裡的模糊效果會因為有流動背景而變得非常漂亮 */
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px);
+    
+    border-radius: 12px; 
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    
+    margin-bottom: 1rem;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    overflow: hidden;
+}
+
+.window-header {
+    background-color: var(--window-header);
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--window-border);
+    width: 100%;
+}
+
+.code-window:hover {
+    transform: translateY(-5px); 
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .code-window:hover {
+    box-shadow: 0 30px 60px rgba(0, 255, 65, 0.15);
+    border-color: rgba(63, 185, 80, 0.5); 
+}
+
+.traffic-lights { display: flex; gap: 8px; }
+.traffic-light { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
+.traffic-light.red { background-color: #ff5f56; }
+.traffic-light.yellow { background-color: #ffbd2e; }
+.traffic-light.green { background-color: #27c93f; }
+
+.window-title {
+    margin-left: 15px;
+    color: var(--window-title);
+    font-size: 0.8rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.window-body {
+    padding: 20px 30px;
+    overflow-x: auto;  
+    color: var(--window-text);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.code-line {
+    display: block;
+    white-space: nowrap; 
+    text-align: left;
+}
+
+.pl-1 { padding-left: 2ch; } 
+.pl-2 { padding-left: 4ch; } 
+
+/* JSON Highlights */
+.json-key { color: var(--json-key); font-weight: 500; } 
+.json-string { color: var(--json-string); } 
+.json-comment { color: var(--json-comment); font-style: italic; }
+
+.json-link {
+    color: var(--json-string);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
+    transition: all 0.2s;
+}
+.json-link:hover {
+    background-color: var(--json-string);
+    color: var(--bg-color);
+    text-decoration: none;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 2rem 1rem;
+        align-items: stretch; 
+    }
+    
+    .code-window {
+        width: 100%; 
+        margin: 0 0 2rem 0;
+    }
+    
+    .window-body {
+        padding: 15px;
+    }
+    
+    .code-line {
+        white-space: pre-wrap; 
+        word-break: break-word;
+    }
+}
+
+
+/* --- Terminal --- */
+#terminal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(10, 10, 10, 0.95); 
+    z-index: 9999;
+    padding: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: #01d335; 
+    overflow-y: auto;
+    backdrop-filter: blur(5px);
+}
+
+#terminal-overlay::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 10000;
+    background-size: 100% 4px, 3px 100%;
+    pointer-events: none; 
+}
+
+#terminal-overlay.open {
+    display: block;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.terminal-content { max-width: 800px; margin: 0 auto; }
+.terminal-output { margin-bottom: 1rem; white-space: pre-wrap; line-height: 1.6; }
+.input-line { display: flex; align-items: center; }
+.prompt { color: #a0a0a0; margin-right: 10px; font-weight: bold; }
+#terminal-input { background: transparent; border: none; color: #01d335; font-family: 'JetBrains Mono', monospace; font-size: 1rem; flex: 1; outline: none; caret-color: #01d335; }
+.cmd-result { color: #ffffff; margin-bottom: 1rem; opacity: 0.9; }
+.cmd-error { color: #ff5555; margin-bottom: 1rem; }
+
+
+.subtitle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; 
+    color: var(--text-sub);
+    font-size: 0.9rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.icon-link {
+    color: var(--text-sub);
+    text-decoration: none;
+    transition: color var(--transition), transform 0.2s;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* 滑鼠移上去 GitHub Icon 的效果 */
+.icon-link:hover {
+    color: var(--accent); 
+    transform: translateY(-2px);
+}
+
+.separator {
+    opacity: 0.5;
+    margin: 0 2px;
+}
