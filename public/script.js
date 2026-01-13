@@ -4,6 +4,8 @@ const icon = document.getElementById('theme-icon');
 const text = document.getElementById('theme-text');
 const html = document.documentElement;
 
+
+
 function getPreferredTheme() {
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme) return storedTheme;
@@ -29,9 +31,12 @@ btn.addEventListener('click', () => {
 });
 
 // --- Terminal Logic ---
+let commandHistory = [];
+let historyIndex = -1;
 const termOverlay = document.getElementById('terminal-overlay');
 const termInput = document.getElementById('terminal-input');
 const termOutput = document.getElementById('terminal-output');
+const availableCommands = ['help', 'whoami', 'about', 'contact', 'reboot', 'clear', 'exit', 'sudo'];
 
 // Listen for keyboard shortcut (~)
 document.addEventListener('keydown', (e) => {
@@ -56,16 +61,58 @@ function toggleTerminal() {
 termInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         const rawInput = termInput.value;
-        const cmd = termInput.value.trim().toLowerCase();
+        const cmd = rawInput.trim().toLowerCase();
 
         printOutput('guest@chelun:~$ ' + rawInput);
 
         if (cmd) {
             processCommand(cmd);
+            // 存入歷史
+            commandHistory.push(rawInput);
+            historyIndex = commandHistory.length;
         }
         termInput.value = '';
-        // Scroll to bottom
         termOverlay.scrollTop = termOverlay.scrollHeight;
+    } 
+    
+    else if (e.key === 'ArrowUp') {
+        e.preventDefault(); 
+        if (commandHistory.length > 0) {
+            if (historyIndex > 0) historyIndex--;
+            termInput.value = commandHistory[historyIndex];
+        }
+    } 
+    
+    else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            termInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            termInput.value = '';
+        }
+    }
+
+    if (e.key === 'Tab') {
+        e.preventDefault(); // 防止 Tab 跳到其他網頁元素
+        
+        const currentInput = termInput.value.trim().toLowerCase();
+        if (!currentInput) return;
+
+        // 尋找以目前輸入開頭的指令
+        const matches = availableCommands.filter(cmd => cmd.startsWith(currentInput));
+
+        if (matches.length === 1) {
+            // 只有一個匹配項，直接補完
+            termInput.value = matches[0];
+        } else if (matches.length > 1) {
+            // 有多個匹配項，可以在 terminal 輸出提示（就像 Linux 一樣）
+            printOutput('guest@chelun:~$ ' + currentInput);
+            printOutput(matches.join('  '));
+            // 保持原本輸入的內容，方便使用者繼續打字
+            termOverlay.scrollTop = termOverlay.scrollHeight;
+        }
     }
 });
 
@@ -79,6 +126,7 @@ function printOutput(text, isHtml = false) {
 function processCommand(cmd) {
     let response = '';
     let className = 'cmd-result';
+    const codeWin = document.querySelector('.code-window');
 
     switch (cmd) {
         case 'help':
@@ -87,6 +135,7 @@ function processCommand(cmd) {
   whoami    - Show your connection info
   about     - Who is Che-Lun?
   contact   - How to reach me
+  reboot    - Restore/Restart the profile window
   clear     - Clear terminal
   exit      - Close terminal`;
             break;
@@ -94,12 +143,12 @@ function processCommand(cmd) {
         case 'whoami':
             if (typeof VISITOR_INFO !== 'undefined') {
                 response = `IP Address: ${VISITOR_INFO.ip}
-Location:   ${VISITOR_INFO.city}, ${VISITOR_INFO.country}
-Connection: Via Cloudflare Node [${VISITOR_INFO.colo}]`;
-            } else {
-                response = "Connection info unavailable.";
-            }
-            break;
+                Location:   ${VISITOR_INFO.city}, ${VISITOR_INFO.country}
+                Connection: Via Cloudflare Node [${VISITOR_INFO.colo}]`;
+                            } else {
+                                response = "Connection info unavailable.";
+                            }
+                            break;
 
         case 'about':
             response = "u don't know Che-lun ? he's a handsome guy.";
@@ -107,6 +156,16 @@ Connection: Via Cloudflare Node [${VISITOR_INFO.colo}]`;
 
         case 'contact':
             response = 'Email: me@chelunliang.com';
+            break;
+
+        case 'reboot':
+        case 'run':
+            if (codeWin.classList.contains('tv-off-active') || codeWin.classList.contains('window-minimize')) {
+                codeWin.classList.remove('tv-off-active', 'window-minimize');
+                response = "System rebooting... Initializing CRT display... OK. Profile restored.";
+            } else {
+                response = "System is already running at PID 125. No reboot needed.";
+            }
             break;
 
         case 'clear':
@@ -123,10 +182,11 @@ Connection: Via Cloudflare Node [${VISITOR_INFO.colo}]`;
             break;
 
         default:
-            response = `Command not found: ${cmd}. Type 'help' for list.`;
+            response = `Command not found: \${cmd}. Type 'help' for list.`;
             className = 'cmd-error';
     }
 
+    // 渲染輸出
     const div = document.createElement('div');
     div.className = className;
     div.innerText = response;
@@ -159,3 +219,17 @@ if (title) {
 }
 
 
+// -------------- code window 關閉按鈕 --------------------
+
+const closeBtn = document.querySelector('.traffic-light.red');
+const miniBtn = document.querySelector('.traffic-light.yellow');
+const codeWin = document.querySelector('.code-window');
+
+// 紅色按鈕
+if (closeBtn && codeWin) {
+    closeBtn.addEventListener('click', () => {
+        document.body.classList.add('body-flicker');
+        codeWin.classList.add('tv-off-active');
+        setTimeout(() => document.body.classList.remove('body-flicker'), 400);
+    });
+}
